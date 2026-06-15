@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISION.AI - Smart Camera Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at top, #1a1e29 0%, #0d0f14 100%);
+            --primary: #4f46e5;
+            --primary-glow: rgba(79, 70, 229, 0.4);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.4);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.4);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.4);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Header Styles */
+        header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            background: rgba(13, 15, 20, 0.5);
+            z-index: 10;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 1.4rem;
+            color: #818cf8;
+            -webkit-text-fill-color: initial;
+        }
+
+        .sys-time {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 30px 20px;
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 30px;
+            flex: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphic Panel Base */
+        .panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(12px) saturate(180%);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #c7d2fe;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px;
+        }
+
+        /* Left Side: Stream Video */
+        .stream-panel {
+            justify-content: center;
+        }
+
+        .stream-container {
+            position: relative;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 25px var(--primary-glow);
+            transition: all 0.5s ease;
+            background: #000;
+            aspect-ratio: 16/9;
+        }
+
+        .stream-container.rec-active {
+            border-color: var(--danger);
+            box-shadow: 0 0 25px var(--danger-glow);
+            animation: pulse-border 2s infinite;
+        }
+
+        .stream-container.tracking-active {
+            border-color: var(--success);
+            box-shadow: 0 0 25px var(--success-glow);
+        }
+
+        .stream-container.zoom-active {
+            border-color: var(--warning);
+            box-shadow: 0 0 25px var(--warning-glow);
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: var(--danger); }
+            50% { border-color: rgba(239, 68, 68, 0.4); }
+            100% { border-color: var(--danger); }
+        }
+
+        .stream-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* HUD Live Indicators */
+        .stream-hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hud-badge {
+            background: rgba(13, 15, 20, 0.75);
+            border: 1px solid var(--glass-border);
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .hud-badge.rec-hud .dot {
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+            animation: flash 1s infinite alternate;
+        }
+
+        @keyframes flash {
+            from { opacity: 0.3; }
+            to { opacity: 1; }
+        }
+
+        /* Right Side: Controls Dashboard */
+        .controls-panel {
+            gap: 25px;
+        }
+
+        .panel-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .panel-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Mode Buttons Grid */
+        .modes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.active[data-mode="DEFAULT"] {
+            background: rgba(79, 70, 229, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn.active[data-mode="TRACKING"] {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn.active[data-mode="STATIC_ZOOM"] {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--warning);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn.active[data-mode="MANUAL_PAN"] {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--warning);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Large Action Buttons */
+        .btn-record {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--danger);
+            color: #fca5a5;
+            padding: 15px;
+            border-radius: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1rem;
+            animation: pulse-red-glow 3s infinite;
+        }
+
+        .btn-record:hover {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+            box-shadow: 0 0 15px var(--danger-glow);
+        }
+
+        .btn-record.recording-active {
+            background: var(--danger);
+            color: #fff;
+            animation: pulse-red-glow-active 1.5s infinite;
+        }
+
+        @keyframes pulse-red-glow-active {
+            0% { box-shadow: 0 0 5px var(--danger-glow); }
+            50% { box-shadow: 0 0 20px var(--danger); }
+            100% { box-shadow: 0 0 5px var(--danger-glow); }
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--glass-border);
+            color: #c7d2fe;
+        }
+
+        .btn-reset:hover {
+            background: rgba(79, 70, 229, 0.25);
+            border-color: var(--primary);
+        }
+
+        /* Custom Slider Styling */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .zoom-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #818cf8;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .zoom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .zoom-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            width: 45px;
+            text-align: right;
+            color: #818cf8;
+        }
+
+        /* Live Log Panel */
+        .log-console {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #38bdf8;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scroll-behavior: smooth;
+        }
+
+        .log-line {
+            line-height: 1.4;
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-time {
+            color: #64748b;
+        }
+
+        .log-tag {
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .log-msg {
+            color: #e2e8f0;
+        }
+
+        .log-tag.info { color: #818cf8; }
+        .log-tag.gesture { color: #f59e0b; }
+        .log-tag.rec { color: #ef4444; }
+
+        /* Gestures Visualizer Bar */
+        .gestures-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .gesture-badge {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .gesture-badge.active {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: var(--warning);
+            color: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
+            transform: scale(1.05);
+        }
+
+        /* Recordings Panel */
+        .recordings-panel {
+            grid-column: 1 / -1;
+        }
+
+        .recordings-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .recording-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .recording-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .recording-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .recording-icon {
+            font-size: 1.8rem;
+            color: #818cf8;
+            margin-top: 2px;
+        }
+
+        .recording-details {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .recording-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .recording-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 10px;
+        }
+
+        .recording-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .recording-actions .btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        .btn-play {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(79, 70, 229, 0.4);
+            color: #a5b4fc;
+        }
+
+        .btn-play:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            max-width: 45px;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        .empty-list {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+        }
+
+        .empty-list i {
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Video Modal Overlays */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 10px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            flex-wrap: wrap;
+        }
+
+        .gesture-badge {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .gesture-badge.active {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: var(--warning);
+            color: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
+            transform: scale(1.05);
+        }
+
+        /* Recordings Panel */
+        .recordings-panel {
+            grid-column: 1 / -1;
+        }
+
+        .recordings-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .recording-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .recording-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .recording-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .recording-icon {
+            font-size: 1.8rem;
+            color: #818cf8;
+            margin-top: 2px;
+        }
+
+        .recording-details {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .recording-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .recording-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 10px;
+        }
+
+        .recording-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .recording-actions .btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        .btn-play {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(79, 70, 229, 0.4);
+            color: #a5b4fc;
+        }
+
+        .btn-play:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            max-width: 45px;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        .empty-list {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+        }
+
+        .empty-list i {
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Video Modal Overlays */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 10px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-video {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-circle-nodes"></i>
+            <span>VISION.AI</span>
+        </div>
+        <div class="sys-time">
+            <i class="fa-solid fa-clock"></i>
+            <span id="time-string">--:--:--</span>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Left Side: Live Feed -->
+        <div class="panel stream-panel">
+            <div class="panel-title">
+                <i class="fa-solid fa-satellite-dish"></i> Live Stream Feed
+            </div>
+            
+            <div class="stream-container" id="stream-container">
+                <div class="stream-hud">
+                    <div class="hud-badge active">
+                        <div class="dot" style="background: var(--primary)"></div>
+                        <span id="hud-state-label">STATE: DEFAULT</span>
+                    </div>
+                    <div class="hud-badge rec-hud" id="rec-hud" style="display: none;">
+                        <div class="dot"></div>
+                        <span>REC ACTIVE</span>
+                    </div>
+                </div>
+                <img id="camera-stream" src="/video_feed" alt="Webcam Stream" class="stream-img">
+            </div>
+            
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <button class="btn btn-record" id="record-toggle-btn" onclick="toggleRecording()">
+                    <i class="fa-solid fa-record-vinyl"></i> Start Recording
+                </button>
+                <button class="btn btn-reset" onclick="resetApp()">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Reset Device
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Side: Controls & Diagnostics -->
+        <div class="panel controls-panel">
+            <div class="panel-title">
+                <i class="fa-solid fa-sliders"></i> Control Dashboard
+            </div>
+
+            <!-- Camera Source Selection -->
+            <div class="panel-row">
+                <div class="panel-label">Camera Device Source</div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <select class="btn" id="camera-select" style="flex: 1; text-align: left; appearance: auto; padding-right: 30px; background: rgba(255, 255, 255, 0.05);" onchange="changeCameraDevice(this.value)">
+                        <option value="0" style="background: #0d0f14; color: #fff;">Camera 0 (Default)</option>
+                    </select>
+                    <button class="btn" onclick="scanCameraDevices(true)" title="Rescan Cameras" style="max-width: 50px; padding: 0; min-width: 45px;">
+                        <i class="fa-solid fa-sync"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Manual Mode Override -->
+            <div class="panel-row">
+                <div class="panel-label">System State Override</div>
+                <div class="modes-grid">
+                    <button class="btn" data-mode="DEFAULT" onclick="setCameraState('DEFAULT')">
+                        <i class="fa-solid fa-camera"></i> Normal View
+                    </button>
+                    <button class="btn" data-mode="TRACKING" onclick="setCameraState('TRACKING')">
+                        <i class="fa-solid fa-user-focus"></i> Tracking
+                    </button>
+                    <button class="btn" data-mode="STATIC_ZOOM" onclick="setCameraState('STATIC_ZOOM')">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i> Static Zoom
+                    </button>
+                    <button class="btn" data-mode="MANUAL_PAN" onclick="setCameraState('MANUAL_PAN')">
+                        <i class="fa-solid fa-arrows-up-down-left-right"></i> Manual Pan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zoom Control Slider -->
+            <div class="panel-row">
+                <div class="panel-label">Manual Zoom Factor</div>
+                <div class="slider-container">
+                    <i class="fa-solid fa-magnifying-glass-minus" style="color: var(--text-muted)"></i>
+                    <input type="range" class="zoom-slider" id="zoom-slider" min="1.0" max="4.0" step="0.1" value="2.0" oninput="adjustZoom(this.value)">
+                    <i class="fa-solid fa-magnifying-glass-plus" style="color: var(--text-muted)"></i>
+                    <div class="zoom-value" id="zoom-value-label">2.0x</div>
+                </div>
+            </div>
+
+            <!-- Detected Gestures -->
+            <div class="panel-row">
+                <div class="panel-label">Gesture Telemetry</div>
+                <div class="gestures-bar">
+                    <div class="gesture-badge" id="g-single-l">
+                        <i class="fa-solid fa-hand-pointer"></i> SINGLE_L
+                    </div>
+                    <div class="gesture-badge" id="g-double-l">
+                        <i class="fa-solid fa-hands"></i> DOUBLE_L
+                    </div>
+                    <div class="gesture-badge" id="g-fist">
+                        <i class="fa-solid fa-hand-back-fist"></i> CLOSED_FIST
+                    </div>
+                    <div class="gesture-badge" id="g-peace">
+                        <i class="fa-solid fa-hand-peace"></i> PEACE
+                    </div>
+                    <div class="gesture-badge" id="g-clapper">
+                        <i class="fa-solid fa-clapperboard"></i> CLAPPERBOARD
+                    </div>
+                    <div class="gesture-badge" id="g-double-fist">
+                        <i class="fa-solid fa-hand-back-fist"></i> PINCH_ZOOM
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Logs -->
+            <div class="panel-row">
+                <div class="panel-label">Event Stream Logs</div>
+                <div class="log-console" id="log-console">
+                    <div class="log-line">
+                        <span class="log-time" id="log-init-time">--:--:--</span>
+                        <span class="log-tag info">SYSTEM</span>
+                        <span class="log-msg">Portal connected, streaming initialization...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recordings Gallery -->
+        <div class="panel recordings-panel">
+            <div class="panel-title">
+                <i class="fa-solid fa-video"></i> Local Recordings Database
+            </div>
+            <div class="recordings-list" id="recordings-list">
+                <!-- Loaded dynamically -->
+                <div class="empty-list">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>No recorded videos found on disk.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Video Modal Player -->
+    <div class="modal" id="video-modal" onclick="closeVideoModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeVideoModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <video id="modal-video-player" class="modal-video" controls></video>
+        </div>
+    </div>
+
+    <script>
+        let currentState = "DEFAULT";
+        let isRecording = false;
+        let activeZoom = 2.0;
+        let lastLoggedState = "";
+        let lastLoggedRec = null;
+
+        // Digital Clock
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            document.getElementById('time-string').innerText = timeStr;
+            
+            const logInitTime = document.getElementById('log-init-time');
+            if (logInitTime && logInitTime.innerText === '--:--:--') {
+                logInitTime.innerText = timeStr;
+            }
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Write Log to Virtual Console
+        function writeLog(tag, msg, type = "info") {
+            const consoleEl = document.getElementById('log-console');
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `
+                <span class="log-time">${timeStr}</span>
+                <span class="log-tag ${type}">${tag}</span>
+                <span class="log-msg">${msg}</span>
+            `;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // Poll application status
+        function pollStatus() {
+            fetch('/status')
+                .then(res => res.json())
+                .then(data => {
+                    // Update State Indicator
+                    const hudState = document.getElementById('hud-state-label');
+                    hudState.innerText = `STATE: ${data.state}`;
+                    
+                    const streamContainer = document.getElementById('stream-container');
+                    streamContainer.className = 'stream-container';
+                    
+                    // Toggle borders and state lights
+                    document.querySelectorAll('.modes-grid .btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.getAttribute('data-mode') === data.state) {
+                            btn.classList.add('active');
+                        }
+                    });
+
+                    if (data.state === 'TRACKING') {
+                        streamContainer.classList.add('tracking-active');
+                    } else if (data.state === 'STATIC_ZOOM' || data.state === 'MANUAL_PAN') {
+                        streamContainer.classList.add('zoom-active');
+                    }
+
+                    // Handle State Logging
+                    if (data.state !== currentState) {
+                        writeLog("STATE", `Transitioned camera to state: ${data.state}`, "info");
+                        currentState = data.state;
+                    }
+
+                    // Update Zoom slider value
+                    if (data.zoom !== activeZoom) {
+                        activeZoom = data.zoom;
+                        document.getElementById('zoom-slider').value = activeZoom;
+                        document.getElementById('zoom-value-label').innerText = activeZoom.toFixed(1) + 'x';
+                        writeLog("ZOOM", `Zoom level changed to: ${activeZoom.toFixed(1)}x`, "info");
+                    }
+
+                    // Update Recording Indicator & Log
+                    const recHud = document.getElementById('rec-hud');
+                    const recordBtn = document.getElementById('record-toggle-btn');
+                    
+                    if (data.recording) {
+                        recHud.style.display = 'flex';
+                        streamContainer.classList.add('rec-active');
+                        recordBtn.className = 'btn btn-record recording-active';
+                        recordBtn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop Recording';
+                        
+                        if (isRecording !== data.recording) {
+                            writeLog("REC", "Video recording session started", "rec");
+                            isRecording = true;
+                        }
+                    } else {
+                        recHud.style.display = 'none';
+                        recordBtn.className = 'btn btn-record';
+                        recordBtn.innerHTML = '<i class="fa-solid fa-record-vinyl"></i> Start Recording';
+                        
+                        if (isRecording !== data.recording) {
+                            writeLog("REC", "Video recording session saved", "rec");
+                            isRecording = false;
+                            loadRecordingsList(); // refresh recordings list when saved
+                        }
+                    }
+
+                    // Update Gesture Badges
+                    const gestures = data.gestures || [];
+                    document.getElementById('g-single-l').className = 'gesture-badge' + (gestures.includes('SINGLE_L') ? ' active' : '');
+                    document.getElementById('g-double-l').className = 'gesture-badge' + (gestures.includes('DOUBLE_L') ? ' active' : '');
+                    document.getElementById('g-fist').className = 'gesture-badge' + (gestures.includes('CLOSED_FIST') ? ' active' : '');
+                    document.getElementById('g-peace').className = 'gesture-badge' + (gestures.includes('PEACE') ? ' active' : '');
+                    document.getElementById('g-clapper').className = 'gesture-badge' + (gestures.includes('CLAPPERBOARD') ? ' active' : '');
+                    document.getElementById('g-double-fist').className = 'gesture-badge' + (gestures.includes('DOUBLE_FIST') ? ' active' : '');
+
+                    // Log new gesture trigger
+                    gestures.forEach(g => {
+                        // Rate limit gesture logging to keep logs useful
+                        if (window.lastLoggedGesture !== g) {
+                            writeLog("GESTURE", `Sensor detected: ${g}`, "gesture");
+                            window.lastLoggedGesture = g;
+                            // reset gesture memory after 3 seconds
+                            setTimeout(() => { window.lastLoggedGesture = null; }, 3000);
+                        }
+                    });
+                })
+                .catch(err => console.error("Poll status error:", err));
+        }
+
+        // API Operations
+        function toggleRecording() {
+            fetch('/toggle_recording', { method: 'POST' })
+                .then(res => res.json())
+                .catch(err => writeLog("ERROR", `Failed to toggle record: ${err.message}`, "rec"));
+        }
+
+        function setCameraState(mode) {
+            fetch('/set_state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state: mode })
+            })
+            .then(res => res.json())
+            .catch(err => writeLog("ERROR", `Failed to set state: ${err.message}`, "info"));
+        }
+
+        function adjustZoom(val) {
+            document.getElementById('zoom-value-label').innerText = parseFloat(val).toFixed(1) + 'x';
+            fetch('/zoom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ zoom: parseFloat(val) })
+            })
+            .then(res => res.json())
+            .catch(err => writeLog("ERROR", `Failed to adjust zoom: ${err.message}`, "info"));
+        }
+
+        function resetApp() {
+            fetch('/reset', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    writeLog("RESET", "Re-initialized system configuration to defaults", "info");
+                })
+                .catch(err => writeLog("ERROR", `Failed to reset system: ${err.message}`, "info"));
+        }
+
+        function scanCameraDevices(force = false) {
+            writeLog("SYSTEM", "Scanning for camera devices...", "info");
+            fetch(`/cameras?scan=${force}`)
+                .then(res => res.json())
+                .then(devices => {
+                    const select = document.getElementById('camera-select');
+                    const currentVal = select.value;
+                    select.innerHTML = '';
+                    devices.forEach(idx => {
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.text = `Camera ${idx}`;
+                        opt.style.background = '#0d0f14';
+                        opt.style.color = '#fff';
+                        select.appendChild(opt);
+                    });
+                    if (devices.includes(parseInt(currentVal))) {
+                        select.value = currentVal;
+                    }
+                    writeLog("SYSTEM", `Scan complete. Found ${devices.length} device(s).`, "info");
+                })
+                .catch(err => writeLog("ERROR", `Camera scan failed: ${err.message}`, "info"));
+        }
+
+        function changeCameraDevice(index) {
+            fetch('/change_camera', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index: parseInt(index) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    writeLog("CAMERA", `Switched active feed source to Camera ${index}`, "info");
+                    // Force refresh image stream url
+                    const img = document.getElementById('camera-stream');
+                    img.src = '/video_feed?t=' + new Date().getTime();
+                } else {
+                    writeLog("ERROR", `Failed to switch camera: ${data.error}`, "info");
+                }
+            })
+            .catch(err => writeLog("ERROR", `Switch camera request error: ${err.message}`, "info"));
+        }
+
+        // Recordings list loader
+        function loadRecordingsList() {
+            fetch('/recordings')
+                .then(res => res.json())
+                .then(data => {
+                    const listContainer = document.getElementById('recordings-list');
+                    if (!data || data.length === 0) {
+                        listContainer.innerHTML = `
+                            <div class="empty-list">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span>No recorded videos found on disk.</span>
+                            </div>`;
+                        return;
+                    }
+
+                    listContainer.innerHTML = '';
+                    data.forEach(file => {
+                        const card = document.createElement('div');
+                        card.className = 'recording-card';
+                        card.innerHTML = `
+                            <div class="recording-info">
+                                <i class="fa-regular fa-file-video recording-icon"></i>
+                                <div class="recording-details">
+                                    <span class="recording-name" title="${file.name}">${file.name}</span>
+                                    <div class="recording-meta">
+                                        <span><i class="fa-solid fa-database"></i> ${file.size}</span>
+                                        <span><i class="fa-solid fa-calendar-days"></i> ${file.created}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="recording-actions">
+                                <button class="btn btn-play" onclick="openVideoPlayer('${file.name}')">
+                                    <i class="fa-solid fa-play"></i> Watch
+                                </button>
+                                <a href="/recordings/${file.name}" download class="btn" style="text-decoration:none;">
+                                    <i class="fa-solid fa-download"></i>
+                                </a>
+                                <button class="btn btn-delete" onclick="deleteRecording('${file.name}')">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+                        `;
+                        listContainer.appendChild(card);
+                    });
+                })
+                .catch(err => console.error("Load recordings error:", err));
+        }
+
+        function deleteRecording(name) {
+            if (!confirm(`Are you sure you want to permanently delete recording ${name}?`)) {
+                return;
+            }
+            fetch(`/recordings/${name}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        writeLog("DELETE", `Successfully deleted file: ${name}`, "rec");
+                        loadRecordingsList();
+                    } else {
+                        writeLog("ERROR", `Failed to delete file: ${data.error}`, "rec");
+                    }
+                })
+                .catch(err => writeLog("ERROR", `Error deleting file: ${err.message}`, "rec"));
+        }
+
+        // Modal Video Player Controls
+        function openVideoPlayer(filename) {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('modal-video-player');
+            player.src = `/recordings/${filename}`;
+            modal.classList.add('active');
+            player.play();
+            writeLog("PLAYER", `Playing clip: ${filename}`, "info");
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('modal-video-player');
+            player.pause();
+            player.src = '';
+            modal.classList.remove('active');
+        }
+
+        // Initialize polling and lists
+        setInterval(pollStatus, 1000);
+        setInterval(loadRecordingsList, 5000);
+        pollStatus();
+        loadRecordingsList();
+        scanCameraDevices();
+    </script>
+</body>
+</html>
