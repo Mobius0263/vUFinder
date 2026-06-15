@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,10 +8,12 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         :root {
             --bg-gradient: radial-gradient(circle at top, #1a1e29 0%, #0d0f14 100%);
@@ -163,9 +166,17 @@
         }
 
         @keyframes pulse-border {
-            0% { border-color: var(--danger); }
-            50% { border-color: rgba(239, 68, 68, 0.4); }
-            100% { border-color: var(--danger); }
+            0% {
+                border-color: var(--danger);
+            }
+
+            50% {
+                border-color: rgba(239, 68, 68, 0.4);
+            }
+
+            100% {
+                border-color: var(--danger);
+            }
         }
 
         .stream-img {
@@ -214,8 +225,13 @@
         }
 
         @keyframes flash {
-            from { opacity: 0.3; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.3;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* Right Side: Controls Dashboard */
@@ -322,9 +338,17 @@
         }
 
         @keyframes pulse-red-glow-active {
-            0% { box-shadow: 0 0 5px var(--danger-glow); }
-            50% { box-shadow: 0 0 20px var(--danger); }
-            100% { box-shadow: 0 0 5px var(--danger-glow); }
+            0% {
+                box-shadow: 0 0 5px var(--danger-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 20px var(--danger);
+            }
+
+            100% {
+                box-shadow: 0 0 5px var(--danger-glow);
+            }
         }
 
         .btn-reset {
@@ -416,9 +440,17 @@
             color: #e2e8f0;
         }
 
-        .log-tag.info { color: #818cf8; }
-        .log-tag.gesture { color: #f59e0b; }
-        .log-tag.rec { color: #ef4444; }
+        .log-tag.info {
+            color: #818cf8;
+        }
+
+        .log-tag.gesture {
+            color: #f59e0b;
+        }
+
+        .log-tag.rec {
+            color: #ef4444;
+        }
 
         /* Gestures Visualizer Bar */
         .gestures-bar {
@@ -825,12 +857,13 @@
         }
     </style>
 </head>
+
 <body>
 
     <header>
         <div class="logo">
             <i class="fa-solid fa-circle-nodes"></i>
-            <span>VISION.AI</span>
+            <span>vUFinder</span>
         </div>
         <div class="sys-time">
             <i class="fa-solid fa-clock"></i>
@@ -839,13 +872,13 @@
     </header>
 
     <div class="container">
-        
+
         <!-- Left Side: Live Feed -->
         <div class="panel stream-panel">
             <div class="panel-title">
                 <i class="fa-solid fa-satellite-dish"></i> Live Stream Feed
             </div>
-            
+
             <div class="stream-container" id="stream-container">
                 <div class="stream-hud">
                     <div class="hud-badge active">
@@ -859,7 +892,7 @@
                 </div>
                 <img id="camera-stream" src="/video_feed" alt="Webcam Stream" class="stream-img">
             </div>
-            
+
             <div style="display: flex; gap: 15px; width: 100%;">
                 <button class="btn btn-record" id="record-toggle-btn" onclick="toggleRecording()">
                     <i class="fa-solid fa-record-vinyl"></i> Start Recording
@@ -880,10 +913,13 @@
             <div class="panel-row">
                 <div class="panel-label">Camera Device Source</div>
                 <div style="display: flex; gap: 10px; width: 100%;">
-                    <select class="btn" id="camera-select" style="flex: 1; text-align: left; appearance: auto; padding-right: 30px; background: rgba(255, 255, 255, 0.05);" onchange="changeCameraDevice(this.value)">
+                    <select class="btn" id="camera-select"
+                        style="flex: 1; text-align: left; appearance: auto; padding-right: 30px; background: rgba(255, 255, 255, 0.05);"
+                        onchange="changeCameraDevice(this.value)">
                         <option value="0" style="background: #0d0f14; color: #fff;">Camera 0 (Default)</option>
                     </select>
-                    <button class="btn" onclick="scanCameraDevices(true)" title="Rescan Cameras" style="max-width: 50px; padding: 0; min-width: 45px;">
+                    <button class="btn" onclick="scanCameraDevices(true)" title="Rescan Cameras"
+                        style="max-width: 50px; padding: 0; min-width: 45px;">
                         <i class="fa-solid fa-sync"></i>
                     </button>
                 </div>
@@ -913,7 +949,8 @@
                 <div class="panel-label">Manual Zoom Factor</div>
                 <div class="slider-container">
                     <i class="fa-solid fa-magnifying-glass-minus" style="color: var(--text-muted)"></i>
-                    <input type="range" class="zoom-slider" id="zoom-slider" min="1.0" max="4.0" step="0.1" value="2.0" oninput="adjustZoom(this.value)">
+                    <input type="range" class="zoom-slider" id="zoom-slider" min="1.0" max="4.0" step="0.1" value="2.0"
+                        oninput="adjustZoom(this.value)">
                     <i class="fa-solid fa-magnifying-glass-plus" style="color: var(--text-muted)"></i>
                     <div class="zoom-value" id="zoom-value-label">2.0x</div>
                 </div>
@@ -995,7 +1032,7 @@
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0];
             document.getElementById('time-string').innerText = timeStr;
-            
+
             const logInitTime = document.getElementById('log-init-time');
             if (logInitTime && logInitTime.innerText === '--:--:--') {
                 logInitTime.innerText = timeStr;
@@ -1009,7 +1046,7 @@
             const consoleEl = document.getElementById('log-console');
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0];
-            
+
             const line = document.createElement('div');
             line.className = 'log-line';
             line.innerHTML = `
@@ -1029,10 +1066,10 @@
                     // Update State Indicator
                     const hudState = document.getElementById('hud-state-label');
                     hudState.innerText = `STATE: ${data.state}`;
-                    
+
                     const streamContainer = document.getElementById('stream-container');
                     streamContainer.className = 'stream-container';
-                    
+
                     // Toggle borders and state lights
                     document.querySelectorAll('.modes-grid .btn').forEach(btn => {
                         btn.classList.remove('active');
@@ -1064,13 +1101,13 @@
                     // Update Recording Indicator & Log
                     const recHud = document.getElementById('rec-hud');
                     const recordBtn = document.getElementById('record-toggle-btn');
-                    
+
                     if (data.recording) {
                         recHud.style.display = 'flex';
                         streamContainer.classList.add('rec-active');
                         recordBtn.className = 'btn btn-record recording-active';
                         recordBtn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop Recording';
-                        
+
                         if (isRecording !== data.recording) {
                             writeLog("REC", "Video recording session started", "rec");
                             isRecording = true;
@@ -1079,7 +1116,7 @@
                         recHud.style.display = 'none';
                         recordBtn.className = 'btn btn-record';
                         recordBtn.innerHTML = '<i class="fa-solid fa-record-vinyl"></i> Start Recording';
-                        
+
                         if (isRecording !== data.recording) {
                             writeLog("REC", "Video recording session saved", "rec");
                             isRecording = false;
@@ -1123,8 +1160,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ state: mode })
             })
-            .then(res => res.json())
-            .catch(err => writeLog("ERROR", `Failed to set state: ${err.message}`, "info"));
+                .then(res => res.json())
+                .catch(err => writeLog("ERROR", `Failed to set state: ${err.message}`, "info"));
         }
 
         function adjustZoom(val) {
@@ -1134,8 +1171,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ zoom: parseFloat(val) })
             })
-            .then(res => res.json())
-            .catch(err => writeLog("ERROR", `Failed to adjust zoom: ${err.message}`, "info"));
+                .then(res => res.json())
+                .catch(err => writeLog("ERROR", `Failed to adjust zoom: ${err.message}`, "info"));
         }
 
         function resetApp() {
@@ -1177,18 +1214,18 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ index: parseInt(index) })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    writeLog("CAMERA", `Switched active feed source to Camera ${index}`, "info");
-                    // Force refresh image stream url
-                    const img = document.getElementById('camera-stream');
-                    img.src = '/video_feed?t=' + new Date().getTime();
-                } else {
-                    writeLog("ERROR", `Failed to switch camera: ${data.error}`, "info");
-                }
-            })
-            .catch(err => writeLog("ERROR", `Switch camera request error: ${err.message}`, "info"));
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        writeLog("CAMERA", `Switched active feed source to Camera ${index}`, "info");
+                        // Force refresh image stream url
+                        const img = document.getElementById('camera-stream');
+                        img.src = '/video_feed?t=' + new Date().getTime();
+                    } else {
+                        writeLog("ERROR", `Failed to switch camera: ${data.error}`, "info");
+                    }
+                })
+                .catch(err => writeLog("ERROR", `Switch camera request error: ${err.message}`, "info"));
         }
 
         // Recordings list loader
@@ -1282,4 +1319,5 @@
         scanCameraDevices();
     </script>
 </body>
+
 </html>
