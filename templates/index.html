@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VISION.AI - Smart Camera Portal</title>
+    <title>vUFinder - Smart Camera Portal</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -361,6 +361,41 @@
             background: rgba(79, 70, 229, 0.25);
             border-color: var(--primary);
         }
+
+        .btn-vcam {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #a5f3fc;
+        }
+
+        .btn-vcam:hover {
+            background: rgb(6, 182, 212);
+            color: #fff;
+            border-color: rgb(6, 182, 212);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-vcam.vcam-active {
+            background: rgb(6, 182, 212);
+            color: #fff;
+            border-color: rgb(6, 182, 212);
+            animation: pulse-cyan-glow-active 1.5s infinite;
+        }
+
+        @keyframes pulse-cyan-glow-active {
+            0% {
+                box-shadow: 0 0 5px rgba(6, 182, 212, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgb(6, 182, 212);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(6, 182, 212, 0.4);
+            }
+        }
+
 
         /* Custom Slider Styling */
         .slider-container {
@@ -855,6 +890,64 @@
             display: block;
             outline: none;
         }
+
+        /* Countdown Overlay Styles */
+        .countdown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            border-radius: 12px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .countdown-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 5px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        #countdown-number {
+            font-size: 4rem;
+            font-weight: 800;
+            color: white;
+            font-family: 'Outfit', 'Inter', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        #countdown-label {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #a5b4fc;
+            text-transform: uppercase;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -890,14 +983,30 @@
                         <span>REC ACTIVE</span>
                     </div>
                 </div>
+                <!-- Countdown Timer Overlay -->
+                <div class="countdown-overlay" id="countdown-overlay" style="display: none;">
+                    <div class="countdown-circle">
+                        <span id="countdown-number">3</span>
+                    </div>
+                    <span id="countdown-label">STARTING IN...</span>
+                </div>
                 <img id="camera-stream" src="/video_feed" alt="Webcam Stream" class="stream-img">
             </div>
 
-            <div style="display: flex; gap: 15px; width: 100%;">
-                <button class="btn btn-record" id="record-toggle-btn" onclick="toggleRecording()">
+            <div style="display: flex; gap: 10px; width: 100%; flex-wrap: wrap;">
+                <button class="btn btn-record" id="record-toggle-btn" onclick="toggleRecording()"
+                    style="flex: 1; min-width: 130px;">
                     <i class="fa-solid fa-record-vinyl"></i> Start Recording
                 </button>
-                <button class="btn btn-reset" onclick="resetApp()">
+                <button class="btn btn-photo" onclick="capturePhoto()"
+                    style="flex: 1; min-width: 130px; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #a7f3d0;">
+                    <i class="fa-solid fa-camera"></i> Capture Photo
+                </button>
+                <button class="btn btn-vcam" id="vcam-toggle-btn" onclick="toggleVirtualCamera()"
+                    style="flex: 1; min-width: 130px;">
+                    <i class="fa-solid fa-video"></i> Start Virtual Cam
+                </button>
+                <button class="btn btn-reset" onclick="resetApp()" style="flex: 1; min-width: 130px;">
                     <i class="fa-solid fa-arrow-rotate-left"></i> Reset Device
                 </button>
             </div>
@@ -924,6 +1033,15 @@
                     </button>
                 </div>
             </div>
+            <!-- Gesture Detection Toggle -->
+            <div class="panel-row">
+                <div class="panel-label">Gesture Control Mute</div>
+                <button class="btn" id="gesture-toggle-btn" onclick="toggleGestures()"
+                    style="width: 100%; font-weight: 600; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #a7f3d0;">
+                    <i class="fa-solid fa-hand"></i> Gestures: ENABLED
+                </button>
+            </div>
+
 
             <!-- Manual Mode Override -->
             <div class="panel-row">
@@ -1016,13 +1134,17 @@
             <button class="modal-close" onclick="closeVideoModal()">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            <video id="modal-video-player" class="modal-video" controls></video>
+            <video id="modal-video-player" class="modal-video" controls style="display: none;"></video>
+            <img id="modal-photo-viewer" class="modal-video"
+                style="display: none; width: 100%; border-radius: 12px; max-height: 80vh; object-fit: contain;">
         </div>
     </div>
 
     <script>
         let currentState = "DEFAULT";
         let isRecording = false;
+        let isVirtualCamActive = false;
+        let isGesturesEnabled = true;
         let activeZoom = 2.0;
         let lastLoggedState = "";
         let lastLoggedRec = null;
@@ -1069,6 +1191,29 @@
 
                     const streamContainer = document.getElementById('stream-container');
                     streamContainer.className = 'stream-container';
+
+                    // Countdown Overlay Handler
+                    const countdownOverlay = document.getElementById('countdown-overlay');
+                    const countdownNumber = document.getElementById('countdown-number');
+                    const countdownLabel = document.getElementById('countdown-label');
+                    if (data.countdown_type && data.countdown_remaining > 0) {
+                        countdownOverlay.style.display = 'flex';
+                        countdownNumber.innerText = data.countdown_remaining;
+                        countdownLabel.innerText = data.countdown_type === 'record' ? 'RECORDING IN...' : 'CAPTURING PHOTO IN...';
+
+                        const circle = countdownOverlay.querySelector('.countdown-circle');
+                        if (circle) {
+                            if (data.countdown_type === 'record') {
+                                circle.style.borderColor = 'var(--danger)';
+                                circle.style.boxShadow = '0 0 30px rgba(239, 68, 68, 0.5)';
+                            } else {
+                                circle.style.borderColor = 'var(--success)';
+                                circle.style.boxShadow = '0 0 30px rgba(16, 185, 129, 0.5)';
+                            }
+                        }
+                    } else {
+                        countdownOverlay.style.display = 'none';
+                    }
 
                     // Toggle borders and state lights
                     document.querySelectorAll('.modes-grid .btn').forEach(btn => {
@@ -1124,6 +1269,30 @@
                         }
                     }
 
+                    // Update Virtual Camera toggle button state & Log
+                    const vcamBtn = document.getElementById('vcam-toggle-btn');
+                    if (data.virtual_camera_active) {
+                        vcamBtn.className = 'btn btn-vcam vcam-active';
+                        vcamBtn.innerHTML = '<i class="fa-solid fa-video-slash"></i> Stop Virtual Cam';
+                        if (!isVirtualCamActive) {
+                            writeLog("VIRTUAL CAM", "Streaming feed to virtual camera input", "info");
+                            isVirtualCamActive = true;
+                        }
+                    } else {
+                        vcamBtn.className = 'btn btn-vcam';
+                        vcamBtn.innerHTML = '<i class="fa-solid fa-video"></i> Start Virtual Cam';
+                        if (isVirtualCamActive) {
+                            writeLog("VIRTUAL CAM", "Stopped streaming to virtual camera", "info");
+                            isVirtualCamActive = false;
+                        }
+                    }
+
+                    // Update gestures enabled button state
+                    if (data.gestures_enabled !== undefined && data.gestures_enabled !== isGesturesEnabled) {
+                        isGesturesEnabled = data.gestures_enabled;
+                        updateGestureToggleButton(isGesturesEnabled);
+                    }
+
                     // Update Gesture Badges
                     const gestures = data.gestures || [];
                     document.getElementById('g-single-l').className = 'gesture-badge' + (gestures.includes('SINGLE_L') ? ' active' : '');
@@ -1154,6 +1323,183 @@
                 .catch(err => writeLog("ERROR", `Failed to toggle record: ${err.message}`, "rec"));
         }
 
+        function capturePhoto() {
+            fetch('/capture_photo', { method: 'POST' })
+                .then(res => res.json())
+                .catch(err => writeLog("ERROR", `Failed to capture photo: ${err.message}`, "info"));
+        }
+
+        function toggleVirtualCamera() {
+            const nextState = !isVirtualCamActive;
+            writeLog("VIRTUAL CAM", `${nextState ? 'Starting' : 'Stopping'} virtual camera...`, "info");
+            fetch('/toggle_virtual_camera', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enable: nextState })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        writeLog("ERROR", `Virtual Cam failed: ${data.error}`, "rec");
+                    }
+                })
+                .catch(err => writeLog("ERROR", `Failed to toggle Virtual Cam: ${err.message}`, "rec"));
+        }
+
+        function updateGestureToggleButton(enabled) {
+            const btn = document.getElementById('gesture-toggle-btn');
+            if (!btn) return;
+            if (enabled) {
+                btn.style.background = 'rgba(16, 185, 129, 0.15)';
+                btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                btn.style.color = '#a7f3d0';
+                btn.innerHTML = '<i class="fa-solid fa-hand"></i> Gestures: ENABLED';
+            } else {
+                btn.style.background = 'rgba(239, 68, 68, 0.15)';
+                btn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                btn.style.color = '#fca5a5';
+                btn.innerHTML = '<i class="fa-solid fa-hand-slash"></i> Gestures: MUTED';
+            }
+        }
+
+        function toggleGestures() {
+            const nextState = !isGesturesEnabled;
+            fetch('/toggle_gestures', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: nextState })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        isGesturesEnabled = data.gestures_enabled;
+                        updateGestureToggleButton(isGesturesEnabled);
+                        writeLog("SYSTEM", `Gesture controls ${isGesturesEnabled ? 'ENABLED' : 'MUTED'}`, "info");
+                    }
+                })
+                .catch(err => writeLog("ERROR", `Failed to toggle gestures: ${err.message}`, "info"));
+        }
+
+        // Panning request coalescing variables
+        let pendingDx = 0;
+        let pendingDy = 0;
+        let isPanRequestPending = false;
+
+        function sendPendingPan() {
+            if (isPanRequestPending || (pendingDx === 0 && pendingDy === 0)) return;
+
+            isPanRequestPending = true;
+            const dxToSend = pendingDx;
+            const dyToSend = pendingDy;
+            pendingDx = 0;
+            pendingDy = 0;
+
+            fetch('/pan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dx: dxToSend, dy: dyToSend })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    isPanRequestPending = false;
+                    sendPendingPan();
+                })
+                .catch(err => {
+                    console.error("Pan error:", err);
+                    isPanRequestPending = false;
+                    sendPendingPan();
+                });
+        }
+
+        // Zoom request coalescing variables
+        let nextZoomToTarget = null;
+        let isZoomRequestPending = false;
+
+        function sendPendingZoom() {
+            if (isZoomRequestPending || nextZoomToTarget === null) return;
+
+            isZoomRequestPending = true;
+            const zoomToSend = nextZoomToTarget;
+            nextZoomToTarget = null;
+
+            fetch('/zoom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ zoom: zoomToSend })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    isZoomRequestPending = false;
+                    sendPendingZoom();
+                })
+                .catch(err => {
+                    console.error("Zoom error:", err);
+                    isZoomRequestPending = false;
+                    sendPendingZoom();
+                });
+        }
+
+        function setupPreviewControls() {
+            const streamImg = document.getElementById('camera-stream');
+            if (!streamImg) return;
+            let isDragging = false;
+            let startX, startY;
+
+            streamImg.style.cursor = 'grab';
+
+            streamImg.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                streamImg.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                    startX = e.clientX;
+                    startY = e.clientY;
+
+                    const scaleX = 1280 / streamImg.offsetWidth;
+                    const scaleY = 720 / streamImg.offsetHeight;
+
+                    pendingDx += -dx * scaleX;
+                    pendingDy += -dy * scaleY;
+
+                    sendPendingPan();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    streamImg.style.cursor = 'grab';
+                }
+            });
+
+            streamImg.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomStep = 0.5;
+                let targetZoom = activeZoom;
+                if (e.deltaY < 0) {
+                    targetZoom = Math.min(activeZoom + zoomStep, 4.0);
+                } else {
+                    targetZoom = Math.max(activeZoom - zoomStep, 1.0);
+                }
+                if (targetZoom !== activeZoom) {
+                    adjustZoom(targetZoom);
+                }
+            }, { passive: false });
+        }
+
+        setTimeout(setupPreviewControls, 500);
+
+
         function setCameraState(mode) {
             fetch('/set_state', {
                 method: 'POST',
@@ -1165,14 +1511,10 @@
         }
 
         function adjustZoom(val) {
-            document.getElementById('zoom-value-label').innerText = parseFloat(val).toFixed(1) + 'x';
-            fetch('/zoom', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ zoom: parseFloat(val) })
-            })
-                .then(res => res.json())
-                .catch(err => writeLog("ERROR", `Failed to adjust zoom: ${err.message}`, "info"));
+            const parsedVal = parseFloat(val);
+            document.getElementById('zoom-value-label').innerText = parsedVal.toFixed(1) + 'x';
+            nextZoomToTarget = parsedVal;
+            sendPendingZoom();
         }
 
         function resetApp() {
@@ -1192,15 +1534,18 @@
                     const select = document.getElementById('camera-select');
                     const currentVal = select.value;
                     select.innerHTML = '';
-                    devices.forEach(idx => {
+                    devices.forEach(dev => {
                         const opt = document.createElement('option');
+                        const idx = (typeof dev === 'object' && dev !== null) ? dev.index : dev;
+                        const name = (typeof dev === 'object' && dev !== null) ? dev.name : `Camera ${dev}`;
                         opt.value = idx;
-                        opt.text = `Camera ${idx}`;
+                        opt.text = name;
                         opt.style.background = '#0d0f14';
                         opt.style.color = '#fff';
                         select.appendChild(opt);
                     });
-                    if (devices.includes(parseInt(currentVal))) {
+                    const deviceIndices = devices.map(dev => (typeof dev === 'object' && dev !== null) ? dev.index : dev);
+                    if (deviceIndices.includes(parseInt(currentVal))) {
                         select.value = currentVal;
                     }
                     writeLog("SYSTEM", `Scan complete. Found ${devices.length} device(s).`, "info");
@@ -1209,6 +1554,8 @@
         }
 
         function changeCameraDevice(index) {
+            const select = document.getElementById('camera-select');
+            const deviceName = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : `Camera ${index}`;
             fetch('/change_camera', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1217,7 +1564,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        writeLog("CAMERA", `Switched active feed source to Camera ${index}`, "info");
+                        writeLog("CAMERA", `Switched active feed source to ${deviceName}`, "info");
                         // Force refresh image stream url
                         const img = document.getElementById('camera-stream');
                         img.src = '/video_feed?t=' + new Date().getTime();
@@ -1238,18 +1585,30 @@
                         listContainer.innerHTML = `
                             <div class="empty-list">
                                 <i class="fa-solid fa-folder-open"></i>
-                                <span>No recorded videos found on disk.</span>
+                                <span>No recorded videos or photos found on disk.</span>
                             </div>`;
                         return;
                     }
 
                     listContainer.innerHTML = '';
                     data.forEach(file => {
+                        const isPhoto = file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png');
+                        const icon = isPhoto ? 'fa-regular fa-image' : 'fa-regular fa-file-video';
+                        const iconColor = isPhoto ? '#10b981' : '#818cf8';
+
+                        const actionBtn = isPhoto ? `
+                            <button class="btn btn-play" onclick="openPhotoViewer('${file.name}')" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #a7f3d0;">
+                                <i class="fa-solid fa-eye"></i> View
+                            </button>` : `
+                            <button class="btn btn-play" onclick="openVideoPlayer('${file.name}')">
+                                <i class="fa-solid fa-play"></i> Watch
+                            </button>`;
+
                         const card = document.createElement('div');
                         card.className = 'recording-card';
                         card.innerHTML = `
                             <div class="recording-info">
-                                <i class="fa-regular fa-file-video recording-icon"></i>
+                                <i class="${icon} recording-icon" style="color: ${iconColor}"></i>
                                 <div class="recording-details">
                                     <span class="recording-name" title="${file.name}">${file.name}</span>
                                     <div class="recording-meta">
@@ -1259,9 +1618,7 @@
                                 </div>
                             </div>
                             <div class="recording-actions">
-                                <button class="btn btn-play" onclick="openVideoPlayer('${file.name}')">
-                                    <i class="fa-solid fa-play"></i> Watch
-                                </button>
+                                ${actionBtn}
                                 <a href="/recordings/${file.name}" download class="btn" style="text-decoration:none;">
                                     <i class="fa-solid fa-download"></i>
                                 </a>
@@ -1277,9 +1634,17 @@
         }
 
         function deleteRecording(name) {
-            if (!confirm(`Are you sure you want to permanently delete recording ${name}?`)) {
+            if (!confirm(`Are you sure you want to permanently delete ${name}?`)) {
                 return;
             }
+
+            // Release the file handle on Windows before deleting
+            const player = document.getElementById('modal-video-player');
+            const viewer = document.getElementById('modal-photo-viewer');
+            if (player.src.includes(name) || viewer.src.includes(name)) {
+                closeVideoModal();
+            }
+
             fetch(`/recordings/${name}`, { method: 'DELETE' })
                 .then(res => res.json())
                 .then(data => {
@@ -1297,17 +1662,36 @@
         function openVideoPlayer(filename) {
             const modal = document.getElementById('video-modal');
             const player = document.getElementById('modal-video-player');
+            const viewer = document.getElementById('modal-photo-viewer');
+
             player.src = `/recordings/${filename}`;
+            player.style.display = 'block';
+            viewer.style.display = 'none';
             modal.classList.add('active');
             player.play();
             writeLog("PLAYER", `Playing clip: ${filename}`, "info");
         }
 
+        function openPhotoViewer(filename) {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('modal-video-player');
+            const viewer = document.getElementById('modal-photo-viewer');
+
+            viewer.src = `/recordings/${filename}`;
+            viewer.style.display = 'block';
+            player.style.display = 'none';
+            modal.classList.add('active');
+            writeLog("VIEWER", `Viewing photo: ${filename}`, "info");
+        }
+
         function closeVideoModal() {
             const modal = document.getElementById('video-modal');
             const player = document.getElementById('modal-video-player');
+            const viewer = document.getElementById('modal-photo-viewer');
+
             player.pause();
             player.src = '';
+            viewer.src = '';
             modal.classList.remove('active');
         }
 
